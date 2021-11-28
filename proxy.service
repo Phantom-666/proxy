@@ -1,0 +1,13 @@
+[Unit]
+Description=Proxy daemon service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=60
+ExecStart=npm start --prefix /home/vadim/proxy
+
+[Install]
+WantedBy=multi-user.target
