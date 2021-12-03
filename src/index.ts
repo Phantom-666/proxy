@@ -17,6 +17,38 @@ const run = async () => {
   //http Proxy
   const server = http
     .createServer((req: any, res) => {
+      const proxyAuth: string | null = req.headers['proxy-authorization']
+
+      if (!proxyAuth) {
+        res.socket.write(
+          'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="Access to the internal site"\r\n\r\n'
+        )
+
+        res.end()
+
+        return
+      }
+
+      const { username, pass } = decodeProxyCredentials(proxyAuth)
+
+      if (username !== credentials.login) {
+        res.socket.write(
+          'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="Access to the internal site"\r\n\r\n'
+        )
+
+        res.socket.end()
+        return
+      }
+
+      if (pass !== credentials.pass) {
+        res.socket.write(
+          'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="Access to the internal site"\r\n\r\n'
+        )
+        res.socket.end()
+
+        return
+      }
+
       const urlObj = url.parse(req.url)
       const target = urlObj.protocol + '//' + urlObj.host
       console.log('Proxy HTTP request for:', target)
@@ -26,6 +58,7 @@ const run = async () => {
     })
     .listen(PORT, () => console.log(`Server started on port ${PORT}`))
 
+  // https proxy
   server.addListener(statusCodes.connect, (req, socket, bodyhead) => {
     const proxyAuth: string | null = req.headers['proxy-authorization']
 
